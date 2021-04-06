@@ -1,14 +1,76 @@
 import { ChakraProvider, ColorModeProvider } from "@chakra-ui/react";
-import { Provider, createClient } from "urql";
+import {
+    cacheExchange,
+    Cache,
+    QueryInput,
+    query,
+} from "@urql/exchange-graphcache";
+import { Provider, createClient, dedupExchange, fetchExchange } from "urql";
+import {
+    LoginMutation,
+    MeDocument,
+    MeQuery,
+    Query,
+    RegisterMutation,
+} from "../generated/graphql";
+import theme from "../theme";
+
+function betterUpdateQuery<Result, Query>(
+    cache: Cache,
+    qi: QueryInput,
+    result: any,
+    fn: (r: Result, q: Query) => Query
+) {
+    return cache.updateQuery(qi, (data) => fn(result, data as any) as any);
+}
 
 const client = createClient({
     url: "http://localhost:4000/graphql",
     fetchOptions: {
         credentials: "include", // 這樣才會有cookie
     },
+    // 3:26:21開始看不懂==
+    exchanges: [
+        dedupExchange,
+        cacheExchange({
+            updates: {
+                Mutation: {
+                    login: (_result, args, cache, info) => {
+                        // cache.updateQuery({ query: MeDocument }, (data: MeQuery) => {})
+                        betterUpdateQuery<LoginMutation, MeQuery>(
+                            cache,
+                            { query: MeDocument },
+                            _result,
+                            (result, query) => {
+                                if (result.login.errors) {
+                                    return query;
+                                } else {
+                                    return { me: result.login.user };
+                                }
+                            }
+                        );
+                    },
+                    register: (_result, args, cache, info) => {
+                        // cache.updateQuery({ query: MeDocument }, (data: MeQuery) => {})
+                        betterUpdateQuery<RegisterMutation, MeQuery>(
+                            cache,
+                            { query: MeDocument },
+                            _result,
+                            (result, query) => {
+                                if (result.register.errors) {
+                                    return query;
+                                } else {
+                                    return { me: result.register.user };
+                                }
+                            }
+                        );
+                    },
+                },
+            },
+        }),
+        fetchExchange,
+    ],
 });
-
-import theme from "../theme";
 
 function MyApp({ Component, pageProps }: any) {
     return (
