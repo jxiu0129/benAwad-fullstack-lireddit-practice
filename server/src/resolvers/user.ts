@@ -11,6 +11,7 @@ import {
 } from "type-graphql";
 import { MyContext } from "../types";
 import argon2 from "argon2";
+import { EntityManager } from "@mikro-orm/postgresql";
 
 // 除了打一堆Arg()的另一種方式
 @InputType()
@@ -68,8 +69,20 @@ export class UserResolver {
         const user = em.create(User, {
             username: options.username,
             password: hashedPassword,
-        });
+        }); //在影片3:07:58這附近，作者在前端出了點問題，於是決定不用內建em，而用@mikro-orm/posgresql的EnityBuilder當em
+        // let user;
         try {
+            // const result = await (em as EntityManager)
+            //     .createQueryBuilder(User)
+            //     .getKnexQuery()
+            //     .insert({
+            //         username: options.username,
+            //         password: hashedPassword,
+            //         created_at: new Date(),
+            //         updated_at: new Date(),
+            //     })
+            //     .returning("*");
+            // user = result[0];  //這裡是作者改掉的示範，但我跑起來沒問題，就不改了
             await em.persistAndFlush(user);
         } catch (err) {
             if (err.code === "23505") {
