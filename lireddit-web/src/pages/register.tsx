@@ -2,19 +2,51 @@ import React from "react";
 
 import { Formik, Form } from "formik";
 import { Box, Button } from "@chakra-ui/react";
+// import { useMutation } from "urql";
 
 import { Wrapper } from "../components/Wrapper";
 import { InputField } from "../components/InputField";
+import { useRegisterMutation } from "../generated/graphql";
+import { toErrorMap } from "../utils/toErrorMap";
+import { useRouter } from "next/router";
 
 interface registerProps {}
 
+// const REGISTER_MUT = `mutation Register($username:String!, $password:String!) {
+//     register(options: { username: $username, password: $password }) {
+//       user{
+//         id
+//         username
+//       }
+//       errors{
+//         message
+//         field
+//       }
+//     }
+//   }`;
+
 const Register: React.FC<registerProps> = ({}) => {
+    // const [, register] = useMutation(REGISTER_MUT); //用了codegen就不用自己手寫上面的mut
+    const router = useRouter();
+    const [, register] = useRegisterMutation();
     return (
         <Wrapper>
             <Formik
                 initialValues={{ username: "", password: "" }}
-                onSubmit={(values) => {
-                    console.log(values);
+                onSubmit={async (values, { setErrors }) => {
+                    const response = await register({
+                        username: values.username,
+                        password: values.password,
+                    });
+                    if (response.data?.register.errors) {
+                        // setErrors({
+                        //     username: "dowdjwio"
+                        // })
+                        setErrors(toErrorMap(response.data.register.errors));
+                    } else if (response.data?.register.user) {
+                        // worked
+                        router.push("/");
+                    }
                 }}
             >
                 {({ isSubmitting }) => (
