@@ -2,12 +2,13 @@ import { Box, Button, Flex, Link } from "@chakra-ui/react";
 import React from "react";
 import NextLink from "next/link";
 import { useLogoutMutation, useMeQuery } from "../generated/graphql";
+import { isServer } from "../utils/isServer";
 
 interface NavBarProps {}
 
 export const NavBar: React.FC<NavBarProps> = ({}) => {
     const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
-    const [{ data, fetching }] = useMeQuery();
+    const [{ data, fetching }] = useMeQuery({ pause: isServer() }); // pause 設 true 就不會被ssr（使用者資訊沒必要背seo抓）
     let body = null;
 
     // data is loading
