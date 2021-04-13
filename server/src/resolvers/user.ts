@@ -12,6 +12,7 @@ import {
 import { MyContext } from "../types";
 import argon2 from "argon2";
 import { EntityManager } from "@mikro-orm/postgresql";
+import { COOKIE_NAME } from "../constants";
 
 // 除了打一堆Arg()的另一種方式
 @InputType()
@@ -136,5 +137,20 @@ export class UserResolver {
         return {
             user,
         };
+    }
+    @Mutation(() => Boolean)
+    logout(@Ctx() { req, res }: MyContext) {
+        return new Promise((resolve) => {
+            req.session.destroy((err) => {
+                // 這行destroy的session是在redis上的
+                res.clearCookie(COOKIE_NAME);
+                if (err) {
+                    console.log(err);
+                    resolve(false);
+                    return;
+                }
+                resolve(true);
+            });
+        });
     }
 }
