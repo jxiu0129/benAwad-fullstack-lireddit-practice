@@ -13,6 +13,7 @@ import argon2 from "argon2";
 import { COOKIE_NAME } from "../constants";
 import { UsernamePasswordInput } from "./UsernamePasswordInput";
 import { validateRegister } from "../utils/validateRegister";
+// import { EntityManager } from "@mikro-orm/postgresql";
 
 @ObjectType()
 class FieldError {
@@ -51,7 +52,7 @@ export class UserResolver {
         if (errors) {
             return { errors };
         }
-        const hashedPassword = argon2.hash(options.password);
+        const hashedPassword = await argon2.hash(options.password);
         const user = em.create(User, {
             email: options.email,
             username: options.username,
@@ -64,14 +65,16 @@ export class UserResolver {
             //     .getKnexQuery()
             //     .insert({
             //         username: options.username,
+            //         email: options.email,
             //         password: hashedPassword,
-            //         created_at: new Date(),
-            //         updated_at: new Date(),
+            //         create_at: new Date(),
+            //         update_at: new Date(),
             //     })
             //     .returning("*");
-            // user = result[0];  //這裡是作者改掉的示範，但我跑起來沒問題，就不改了
+            // user = result[0]; //這裡是作者改掉的示範，但我跑起來沒問題，就不改了
             await em.persistAndFlush(user);
         } catch (err) {
+            console.log(err);
             if (err.code === "23505") {
                 return {
                     errors: [
@@ -108,7 +111,7 @@ export class UserResolver {
             return {
                 errors: [
                     {
-                        field: "username",
+                        field: "usernameOrEmail",
                         message: "cannot find this username",
                     },
                 ],
@@ -135,7 +138,7 @@ export class UserResolver {
     @Mutation(() => Boolean)
     logout(@Ctx() { req, res }: MyContext) {
         return new Promise((resolve) => {
-            req.session.destroy((err) => {
+            req.session.destroy((err: any) => {
                 // 這行destroy的session是在redis上的
                 res.clearCookie(COOKIE_NAME);
                 if (err) {

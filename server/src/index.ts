@@ -16,10 +16,10 @@ import connectRedis from "connect-redis";
 import { MyContext } from "./types";
 
 import cors from "cors";
-import { sendEmail } from "./utils/sendEmail";
+// import { sendEmail } from "./utils/sendEmail";
 
 const main = async () => {
-    sendEmail("brain@1", "hi brian");
+    // sendEmail("brain@1", "hi brian");
     const orm = await MikroORM.init(mikroConfig); //connect orm
     // await orm.em.nativeDelete(User, {}); // 4:21:43為了新增db欄位，所以先清空db
     await orm.getMigrator().up(); // run migration

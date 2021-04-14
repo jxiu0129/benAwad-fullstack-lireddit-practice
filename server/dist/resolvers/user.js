@@ -73,7 +73,7 @@ let UserResolver = class UserResolver {
             if (errors) {
                 return { errors };
             }
-            const hashedPassword = argon2_1.default.hash(options.password);
+            const hashedPassword = yield argon2_1.default.hash(options.password);
             const user = em.create(User_1.User, {
                 email: options.email,
                 username: options.username,
@@ -83,6 +83,7 @@ let UserResolver = class UserResolver {
                 yield em.persistAndFlush(user);
             }
             catch (err) {
+                console.log(err);
                 if (err.code === "23505") {
                     return {
                         errors: [
@@ -107,7 +108,7 @@ let UserResolver = class UserResolver {
                 return {
                     errors: [
                         {
-                            field: "username",
+                            field: "usernameOrEmail",
                             message: "cannot find this username",
                         },
                     ],

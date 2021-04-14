@@ -1,6 +1,6 @@
 # 跟register一樣，但也可以用這個寫法
-mutation Login($options: UsernamePassworgInput!) {
-    login(options: $options) {
+mutation Login($usernameOrEmail: String!, $password: String!) {
+    login(usernameOrEmail: $usernameOrEmail, password: $password) {
         user {
             ...RegularUser
         }
