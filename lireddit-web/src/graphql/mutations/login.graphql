@@ -1,12 +1,14 @@
 # 跟register一樣，但也可以用這個寫法
 mutation Login($usernameOrEmail: String!, $password: String!) {
     login(usernameOrEmail: $usernameOrEmail, password: $password) {
-        user {
-            ...RegularUser
-        }
-        errors {
-            field
-            message
-        }
+        # user {
+        #     ...RegularUser
+        # }
+        # errors {
+        #     # field
+        #     # message
+        #     ...RegularError
+        # }
+        ...RegularUserResponse
     }
 }
