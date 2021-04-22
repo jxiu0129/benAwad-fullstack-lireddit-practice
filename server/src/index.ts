@@ -28,9 +28,11 @@ const main = async () => {
         username: "jxiu0129",
         // password: "postgres",
         logging: true, // 會把每次的sql印出來
-        synchronize: true, // 會自動做migration
+        synchronize: true, // 會自動做migration，適合在dev時開著
         entities: [Post, User],
     });
+
+    // Post.delete({}); //會刪掉全部的post
 
     // // sendEmail("brain@1", "hi brian");
 

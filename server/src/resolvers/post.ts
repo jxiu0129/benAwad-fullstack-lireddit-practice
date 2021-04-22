@@ -1,7 +1,26 @@
 import { Post } from "../entities/Post";
 import { MyContext } from "../types";
-import { Arg, Ctx, Int, Mutation, Query, Resolver } from "type-graphql";
+import {
+    Arg,
+    Ctx,
+    Field,
+    InputType,
+    Int,
+    Mutation,
+    Query,
+    Resolver,
+    UseMiddleware,
+} from "type-graphql";
 import { sleep } from "../utils/sleep";
+import { isAuth } from "../middleware/isAuth";
+
+@InputType()
+class PostInput {
+    @Field()
+    title: string;
+    @Field()
+    text: string;
+}
 
 @Resolver()
 export class PostResolver {
@@ -24,16 +43,26 @@ export class PostResolver {
     }
 
     @Mutation(() => Post) //mutation => insert, update, delete
+    @UseMiddleware(isAuth)
     async createPost(
-        @Arg("title") title: string
+        @Arg("input") input: PostInput,
         // @Arg("title", () => String) title: string,
         // @Arg('title') title: string, 這行同上一行，graphql有些會自動去抓ts的型別，
         // @Ctx() { em }: MyContext
+        @Ctx() { req }: MyContext
     ): Promise<Post> {
         // const post = em.create(Post, { title });
         // await em.persistAndFlush(post);
         // return post;
-        return Post.create({ title }).save(); // 2 queries
+
+        // if(!req.session.userId) {  因為有上面的UseMiddleware所以就不用了
+        //     throw new Error("not authenticated")
+        // }
+
+        return Post.create({
+            ...input,
+            creatorId: req.session.userId,
+        }).save(); // 2 queries
     }
 
     @Mutation(() => Post, { nullable: true }) //mutation => insert, update, delete
@@ -70,4 +99,7 @@ export class PostResolver {
         await Post.delete(id);
         return true;
     }
+}
+function inputField() {
+    throw new Error("Function not implemented.");
 }

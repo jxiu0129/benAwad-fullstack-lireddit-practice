@@ -1,4 +1,5 @@
 // see the original mikroORM in User
+import { ManyToOne } from "@mikro-orm/core";
 import { Field, ObjectType } from "type-graphql";
 import {
     BaseEntity,
@@ -8,6 +9,7 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from "typeorm";
+import { User } from "./User";
 
 @ObjectType()
 @Entity()
@@ -17,6 +19,26 @@ export class Post extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
+    @Field()
+    @Column()
+    title!: string;
+
+    @Field()
+    @Column()
+    text!: string;
+
+    @Field()
+    @Column({ type: "int", default: 0 })
+    points!: number;
+
+    // 一個使用者會有多個posts，User那邊也要設
+    @ManyToOne(() => User, (user) => user.posts)
+    creator: User;
+
+    @Field()
+    @Column()
+    creatorId: number;
+
     @Field(() => String)
     @CreateDateColumn()
     createAt: Date;
@@ -24,8 +46,4 @@ export class Post extends BaseEntity {
     @Field(() => String)
     @UpdateDateColumn()
     updateAt: Date;
-
-    @Field()
-    @Column()
-    title!: string;
 }

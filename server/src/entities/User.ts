@@ -1,5 +1,6 @@
 // import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
 
+import { OneToMany } from "@mikro-orm/core";
 import { Field, ObjectType } from "type-graphql";
 import {
     BaseEntity,
@@ -9,6 +10,7 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from "typeorm";
+import { Post } from "./Post";
 
 // 以下助解掉的是mikroORM
 @ObjectType()
@@ -18,17 +20,6 @@ export class User extends BaseEntity {
     // @PrimaryKey()
     @PrimaryGeneratedColumn()
     id!: number;
-
-    @Field(() => String)
-    // @Property({ type: "date" })
-    @CreateDateColumn()
-    // createAt = new Date();
-    createAt: Date;
-
-    @Field(() => String)
-    // @Property({ type: "date", onUpdate: () => new Date() })
-    @UpdateDateColumn()
-    updateAt: Date;
 
     @Field()
     // @Property({ type: "text", unique: true })
@@ -44,4 +35,18 @@ export class User extends BaseEntity {
     // @Property({ type: "text" })
     @Column()
     password!: string;
+
+    @OneToMany(() => Post, (post) => post.creator)
+    posts: Post[];
+
+    @Field(() => String)
+    // @Property({ type: "date" })
+    @CreateDateColumn()
+    // createAt = new Date();
+    createAt: Date;
+
+    @Field(() => String)
+    // @Property({ type: "date", onUpdate: () => new Date() })
+    @UpdateDateColumn()
+    updateAt: Date;
 }
