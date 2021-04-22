@@ -1,0 +1,2 @@
+1. 作者把mikro orm刪掉了，所以migration資料夾要清空重新
+2. package.json 把相關套件刪掉，migration指令也刪掉

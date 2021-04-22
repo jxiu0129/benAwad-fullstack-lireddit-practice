@@ -15,6 +15,7 @@ import { UsernamePasswordInput } from "./UsernamePasswordInput";
 import { validateRegister } from "../utils/validateRegister";
 import { sendEmail } from "../utils/sendEmail";
 import { v4 } from "uuid";
+import { getConnection } from "typeorm";
 // import { EntityManager } from "@mikro-orm/postgresql";
 
 @ObjectType()
@@ -39,7 +40,8 @@ export class UserResolver {
     async changePassword(
         @Arg("token") token: string,
         @Arg("newPassword") newPassword: string,
-        @Ctx() { redis, em, req }: MyContext
+        // @Ctx() { redis, em, req }: MyContext
+        @Ctx() { redis, req }: MyContext
     ): Promise<UserResponse> {
         if (newPassword.length <= 2) {
             return {
@@ -66,7 +68,9 @@ export class UserResolver {
             };
         }
 
-        const user = await em.findOne(User, { id: parseInt(userId) });
+        // const user = await em.findOne(User, { id: parseInt(userId) });
+        const userIdNum = parseInt(userId);
+        const user = await User.findOne(userIdNum);
 
         if (!user) {
             return {
@@ -79,8 +83,13 @@ export class UserResolver {
             };
         }
 
-        user.password = await argon2.hash(newPassword);
-        await em.persistAndFlush(user);
+        // user.password = await argon2.hash(newPassword);
+        // await em.persistAndFlush(user);
+
+        await User.update(
+            { id: userIdNum },
+            { password: await argon2.hash(newPassword) }
+        );
 
         // delete key from redis so same token cant change the same pwd again
         redis.del(key);
@@ -94,9 +103,11 @@ export class UserResolver {
     @Mutation(() => Boolean)
     async forgotPassword(
         @Arg("email") email: string,
-        @Ctx() { em, redis }: MyContext
+        // @Ctx() { em, redis }: MyContext
+        @Ctx() { redis }: MyContext
     ) {
-        const user = await em.findOne(User, { email });
+        // const user = await em.findOne(User, { email });
+        const user = await User.findOne({ where: { email } }); // search the column that isnt pk
         if (!user) {
             return true;
         }
@@ -119,31 +130,35 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    async me(@Ctx() { req, em }: MyContext) {
+    // async me(@Ctx() { req, em }: MyContext) {
+    async me(@Ctx() { req }: MyContext) {
         // you are not log in
         if (!req.session.userId) {
             return null;
         }
-        const user = await em.findOne(User, { id: req.session.userId });
+        // const user = await em.findOne(User, { id: req.session.userId });
+        const user = await User.findOne(req.session.userId);
         return user;
     }
 
     @Mutation(() => UserResponse)
     async register(
         @Arg("options") options: UsernamePasswordInput,
-        @Ctx() { em, req }: MyContext
+        @Ctx() { req }: MyContext
     ): Promise<UserResponse> {
         const errors = validateRegister(options);
         if (errors) {
             return { errors };
         }
         const hashedPassword = await argon2.hash(options.password);
-        const user = em.create(User, {
-            email: options.email,
-            username: options.username,
-            password: hashedPassword,
-        }); //在影片3:07:58這附近，作者在前端出了點問題，於是決定不用內建em，而用@mikro-orm/posgresql的EnityBuilder當em
-        // let user;
+
+        // const user = em.create(User, {
+        //     email: options.email,
+        //     username: options.username,
+        //     password: hashedPassword,
+        // }); //在影片3:07:58這附近，作者在前端出了點問題，於是決定不用內建em，而用@mikro-orm/posgresql的EnityBuilder當em
+
+        let user;
         try {
             // const result = await (em as EntityManager)
             //     .createQueryBuilder(User)
@@ -157,7 +172,21 @@ export class UserResolver {
             //     })
             //     .returning("*");
             // user = result[0]; //這裡是作者改掉的示範，但我跑起來沒問題，就不改了
-            await em.persistAndFlush(user);
+
+            // await em.persistAndFlush(user);
+            const result = await getConnection()
+                .createQueryBuilder()
+                .insert()
+                .into(User)
+                .values({
+                    username: options.username,
+                    email: options.email,
+                    password: hashedPassword,
+                })
+                .returning("*")
+                .execute();
+            // User.create({}).save(); //上面等同這句
+            user = result.raw[0];
         } catch (err) {
             console.log(err);
             if (err.code === "23505") {
@@ -184,13 +213,19 @@ export class UserResolver {
         @Arg("usernameOrEmail") usernameOrEmail: string,
         @Arg("password") password: string,
 
-        @Ctx() { em, req }: MyContext
+        @Ctx() { req }: MyContext
     ): Promise<UserResponse> {
-        const user = await em.findOne(
+        // const user = await em.findOne(
+        //     User,
+        //     usernameOrEmail.includes("@")
+        //         ? { email: usernameOrEmail }
+        //         : { username: usernameOrEmail }
+        // );
+        const user = await User.findOne(
             User,
             usernameOrEmail.includes("@")
-                ? { email: usernameOrEmail }
-                : { username: usernameOrEmail }
+                ? { where: { email: usernameOrEmail } }
+                : { where: { username: usernameOrEmail } }
         );
         if (!user) {
             return {

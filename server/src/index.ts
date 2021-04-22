@@ -1,8 +1,8 @@
-import "reflect-metadata";
-import { MikroORM } from "@mikro-orm/core";
+import "reflect-metadata"; // both typeorm & mikroorm need this
+// import { MikroORM } from "@mikro-orm/core";
 import { COOKIE_NAME, __prod__ } from "./constants";
 // import { Post } from "./entities/Post";
-import mikroConfig from "./mikro-orm.config";
+// import mikroConfig from "./mikro-orm.config";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
@@ -17,20 +17,35 @@ import { MyContext } from "./types";
 
 import cors from "cors";
 // import { sendEmail } from "./utils/sendEmail";
+import { createConnection } from "typeorm";
+import { User } from "./entities/User";
+import { Post } from "./entities/Post";
 
 const main = async () => {
-    // sendEmail("brain@1", "hi brian");
-    const orm = await MikroORM.init(mikroConfig); //connect orm
-    // await orm.em.nativeDelete(User, {}); // 4:21:43為了新增db欄位，所以先清空db
-    await orm.getMigrator().up(); // run migration
+    const conn = await createConnection({
+        type: "postgres",
+        database: "ts-fullstack-practice2",
+        username: "jxiu0129",
+        // password: "postgres",
+        logging: true, // 會把每次的sql印出來
+        synchronize: true, // 會自動做migration
+        entities: [Post, User],
+    });
 
-    // const post = orm.em.create(Post, {title: 'my first post'});
-    // await orm.em.persistAndFlush(post);
-    // console.log('-----sql2-----'); 以上是先創建class宣告entity 以下是示範不宣告class的native sql用法
-    // await orm.em.nativeInsert(Post, {title: 'my first post 2'});
+    // // sendEmail("brain@1", "hi brian");
 
-    // const posts = await orm.em.find(Post, {});
-    // console.log(posts); 這兩行是示範如何select
+    // 注解掉因為不用mikro了
+    // const orm = await MikroORM.init(mikroConfig); //connect orm
+    // // await orm.em.nativeDelete(User, {}); // 4:21:43為了新增db欄位，所以先清空db
+    // await orm.getMigrator().up(); // run migration
+
+    // // const post = orm.em.create(Post, {title: 'my first post'});
+    // // await orm.em.persistAndFlush(post);
+    // // console.log('-----sql2-----'); 以上是先創建class宣告entity 以下是示範不宣告class的native sql用法
+    // // await orm.em.nativeInsert(Post, {title: 'my first post 2'});
+
+    // // const posts = await orm.em.find(Post, {});
+    // // console.log(posts); 這兩行是示範如何select
     const app = express();
 
     // app.get('/', (_, res) => { // ignore的 param 可以用_代替
@@ -71,7 +86,8 @@ const main = async () => {
             resolvers: [HelloResolver, PostResolver, UserResolver],
             validate: false,
         }),
-        context: ({ req, res }): MyContext => ({ em: orm.em, req, res, redis }),
+        // context: ({ req, res }): MyContext => ({ em: orm.em, req, res, redis }),
+        context: ({ req, res }) => ({ req, res, redis }),
     });
 
     apolloServer.applyMiddleware({
