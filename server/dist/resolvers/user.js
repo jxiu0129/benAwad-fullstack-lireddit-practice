@@ -165,7 +165,7 @@ let UserResolver = class UserResolver {
     }
     login(usernameOrEmail, password, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield User_1.User.findOne(User_1.User, usernameOrEmail.includes("@")
+            const user = yield User_1.User.findOne(usernameOrEmail.includes("@")
                 ? { where: { email: usernameOrEmail } }
                 : { where: { username: usernameOrEmail } });
             if (!user) {

@@ -222,7 +222,6 @@ export class UserResolver {
         //         : { username: usernameOrEmail }
         // );
         const user = await User.findOne(
-            User,
             usernameOrEmail.includes("@")
                 ? { where: { email: usernameOrEmail } }
                 : { where: { username: usernameOrEmail } }

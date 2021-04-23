@@ -1,4 +1,4 @@
-import { dedupExchange, fetchExchange } from "urql";
+import { dedupExchange, Exchange, fetchExchange } from "urql";
 import { cacheExchange } from "@urql/exchange-graphcache";
 import {
     LogoutMutation,
@@ -8,13 +8,28 @@ import {
     RegisterMutation,
 } from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
+import { pipe, tap } from "wonka";
+import Router from "next/router"; // 因為不在react裡，所以不用hook
+
+const errorExchange: Exchange = ({ forward }) => (ops$) => {
+    return pipe(
+        forward(ops$),
+        tap(({ error }) => {
+            // if the operationResult has an error send a req to sentry
+            // the error is a combinedError with networkError and graphqlErrors properties
+            if (error?.message.includes("not authenticated")) {
+                Router.replace("/login");
+            }
+        })
+    );
+};
 
 export const createUrqlClient = (ssrExchange: any) => ({
     url: "http://localhost:4000/graphql",
     fetchOptions: {
         credentials: "include" as const, // 這樣才會有cookie
     },
-    // 3:26:21開始看不懂==
+    // 3:26:21開始看不懂= =
     exchanges: [
         dedupExchange,
         cacheExchange({
@@ -61,6 +76,7 @@ export const createUrqlClient = (ssrExchange: any) => ({
                 },
             },
         }),
+        errorExchange,
         ssrExchange,
         fetchExchange,
     ],
