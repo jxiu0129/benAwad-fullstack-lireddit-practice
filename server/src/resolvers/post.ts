@@ -13,6 +13,7 @@ import {
 } from "type-graphql";
 import { sleep } from "../utils/sleep";
 import { isAuth } from "../middleware/isAuth";
+import { getConnection } from "typeorm";
 
 @InputType()
 class PostInput {
@@ -26,10 +27,28 @@ class PostInput {
 export class PostResolver {
     @Query(() => [Post]) // query 是用來get
     // async posts(@Ctx() ctx: MyContext): Promise<Post[]> {
-    async posts(): Promise<Post[]> {
-        await sleep(3000);
+    async posts(
+        @Arg("limit", () => Int) limit: number, // Int不宣告，會被編譯成float
+        // @Arg('offset') offset: number, //6:35:10解釋whynot
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null // 如果有設說nullable，Arg就要另外宣告型別，正常情框下他會自己幫你設好
+    ): Promise<Post[]> {
+        // await sleep(3000); 示範ssr用的
         // return ctx.em.find(Post, {});
-        return Post.find();
+
+        // return Post.find();
+
+        const realLimit = Math.min(50, limit);
+        const qb = getConnection()
+            .getRepository(Post)
+            .createQueryBuilder("p") // alias
+            .orderBy('"createAt"', "DESC") // 不double quote，postgres會自動幫你把A轉小，會error
+            .take(realLimit); // limit
+        if (cursor) {
+            qb.where('"createAt" < :cursor', {
+                cursor: new Date(parseInt(cursor)),
+            });
+        }
+        return qb.getMany();
     }
 
     @Query(() => Post, { nullable: true })
