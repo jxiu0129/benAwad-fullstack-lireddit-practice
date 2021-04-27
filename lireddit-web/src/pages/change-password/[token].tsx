@@ -12,7 +12,8 @@ import { createUrqlClient } from "../../utils/createUrqlClient";
 import { toErrorMap } from "../../utils/toErrorMap";
 import NextLink from "next/link";
 
-export const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
+// export const ChangePassword: NextPage<{ token: string }> = ({ token }) => { //後來示範，用router就可以得到token，alternative
+export const ChangePassword: NextPage = () => {
     const [, changePassword] = useChangePasswordMutation();
     const [tokenError, setTokenError] = useState("");
     const router = useRouter();
@@ -23,7 +24,10 @@ export const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
                 onSubmit={async (values, { setErrors }) => {
                     const response = await changePassword({
                         newPassword: values.newPassword,
-                        token,
+                        token:
+                            typeof router.query.token === "string"
+                                ? router.query.token
+                                : "",
                     });
                     if (response.data?.changePassword.errors) {
                         const errorMap = toErrorMap(
@@ -71,10 +75,10 @@ export const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
     );
 };
 
-ChangePassword.getInitialProps = ({ query }) => {
-    return {
-        token: query.token as string,
-    };
-};
+// ChangePassword.getInitialProps = ({ query }) => {
+//     return {
+//         token: query.token as string,
+//     };
+// }; 在這個情境，用router.query比較好，因為getInitialProps是在要用ssr時才要另外宣告，這頁沒有這個需求
 
 export default withUrqlClient(createUrqlClient)(ChangePassword);
