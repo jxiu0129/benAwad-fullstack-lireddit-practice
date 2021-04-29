@@ -4,5 +4,7 @@ query Posts($limit: Int!, $cursor: String) {
         createAt
         updateAt
         title
+        text
+        textSnippet #後端宣告了要使用fieldResolver，只取部分的text
     }
 }

@@ -4,11 +4,13 @@ import {
     Arg,
     Ctx,
     Field,
+    FieldResolver,
     InputType,
     Int,
     Mutation,
     Query,
     Resolver,
+    Root,
     UseMiddleware,
 } from "type-graphql";
 import { sleep } from "../utils/sleep";
@@ -23,8 +25,14 @@ class PostInput {
     text: string;
 }
 
-@Resolver()
+@Resolver(Post)
 export class PostResolver {
+    @FieldResolver(() => String)
+    textSnippet(@Root() root: Post) {
+        //可以只對client作用，不用直接改server端的text
+        return root.text.slice(0, 50);
+    }
+
     @Query(() => [Post]) // query 是用來get
     // async posts(@Ctx() ctx: MyContext): Promise<Post[]> {
     async posts(
