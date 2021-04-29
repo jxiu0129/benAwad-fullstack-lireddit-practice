@@ -15,6 +15,7 @@ import session from "express-session";
 import connectRedis from "connect-redis";
 import { MyContext } from "./types";
 
+import path from "path";
 import cors from "cors";
 // import { sendEmail } from "./utils/sendEmail";
 import { createConnection } from "typeorm";
@@ -29,8 +30,11 @@ const main = async () => {
         // password: "postgres",
         logging: true, // 會把每次的sql印出來
         synchronize: true, // 會自動做migration，適合在dev時開著
+        migrations: [path.join(__dirname, "./migrations/*")],
         entities: [Post, User],
     });
+
+    await conn.runMigrations();
 
     // Post.delete({}); //會刪掉全部的post
 
