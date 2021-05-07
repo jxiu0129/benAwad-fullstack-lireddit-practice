@@ -1,10 +1,12 @@
 query Posts($limit: Int!, $cursor: String) {
     posts(limit: $limit, cursor: $cursor) {
-        id
-        createAt
-        updateAt
-        title
-        text
-        textSnippet #後端宣告了要使用fieldResolver，只取部分的text
+        hasMore
+        posts {
+            id
+            updateAt
+            createAt
+            title
+            textSnippet #後端宣告了要使用fieldResolver，只取部分的text
+        }
     }
 }

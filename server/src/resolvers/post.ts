@@ -8,6 +8,7 @@ import {
     InputType,
     Int,
     Mutation,
+    ObjectType,
     Query,
     Resolver,
     Root,
@@ -25,6 +26,13 @@ class PostInput {
     text: string;
 }
 
+@ObjectType()
+class PaginatedPosts {
+    @Field(() => [Post])
+    posts: Post[];
+    @Field()
+    hasMore: boolean;
+}
 @Resolver(Post)
 export class PostResolver {
     @FieldResolver(() => String)
@@ -33,30 +41,38 @@ export class PostResolver {
         return root.text.slice(0, 50);
     }
 
-    @Query(() => [Post]) // query 是用來get
+    @Query(() => PaginatedPosts) // query 是用來get
     // async posts(@Ctx() ctx: MyContext): Promise<Post[]> {
     async posts(
         @Arg("limit", () => Int) limit: number, // Int不宣告，會被編譯成float
         // @Arg('offset') offset: number, //6:35:10解釋whynot
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null // 如果有設說nullable，Arg就要另外宣告型別，正常情框下他會自己幫你設好
-    ): Promise<Post[]> {
+    ): Promise<PaginatedPosts> {
         // await sleep(3000); 示範ssr用的
-        // return ctx.em.find(Post, {});
+        //// return ctx.em.find(Post, {});
 
-        // return Post.find();
+        //// return Post.find();
 
         const realLimit = Math.min(50, limit);
+        const realLimitPlusOne = realLimit + 1;
         const qb = getConnection()
             .getRepository(Post)
             .createQueryBuilder("p") // alias
             .orderBy('"createAt"', "DESC") // 不double quote，postgres會自動幫你把A轉小，會error
-            .take(realLimit); // limit
+            // .take(realLimit); // limit
+            .take(realLimitPlusOne); // limit
         if (cursor) {
             qb.where('"createAt" < :cursor', {
                 cursor: new Date(parseInt(cursor)),
             });
         }
-        return qb.getMany();
+
+        const posts = await qb.getMany();
+        //// return qb.getMany();
+        return {
+            posts: posts.slice(0, realLimit),
+            hasMore: posts.length === realLimitPlusOne,
+        };
     }
 
     @Query(() => Post, { nullable: true })
@@ -126,7 +142,4 @@ export class PostResolver {
         await Post.delete(id);
         return true;
     }
-}
-function inputField() {
-    throw new Error("Function not implemented.");
 }

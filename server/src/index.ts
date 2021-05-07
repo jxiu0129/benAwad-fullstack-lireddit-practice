@@ -37,13 +37,15 @@ const main = async () => {
     await conn.runMigrations();
 
     // Post.delete({}); //會刪掉全部的post
+    // const posts = await Post.find({});
+    // console.log(posts);
 
     // // sendEmail("brain@1", "hi brian");
 
-    // 注解掉因為不用mikro了
-    // const orm = await MikroORM.init(mikroConfig); //connect orm
+    //// 注解掉因為不用mikro了
+    //// const orm = await MikroORM.init(mikroConfig); //connect orm
     // // await orm.em.nativeDelete(User, {}); // 4:21:43為了新增db欄位，所以先清空db
-    // await orm.getMigrator().up(); // run migration
+    //// await orm.getMigrator().up(); // run migration
 
     // // const post = orm.em.create(Post, {title: 'my first post'});
     // // await orm.em.persistAndFlush(post);

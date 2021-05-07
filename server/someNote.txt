@@ -1,2 +1,9 @@
+這個專案練習的網址是https://www.youtube.com/watch?v=I6ypD7qv3Z8&t=4s
+
 1. 作者把mikro orm刪掉了，所以migration資料夾要清空重新
 2. package.json 把相關套件刪掉，migration指令也刪掉
+3. 5/7決定先停在時間軸：7:40:41​ URQL Pagination Has More的 8:00:00，因為覺得花太多時間在端上面，想要複習一下後端
+
+
+SOME SETTING
+這個專案的db位置：psql -U jxiu0129 -d ts-fullstack-practice2
